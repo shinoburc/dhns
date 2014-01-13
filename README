@@ -1,0 +1,78 @@
+
+dhns : Dynamic Host Name Service
+
+DHCP環境下で /etc/hosts に名前解決情報を書き込むスクリプト集とサーバのセットです。
+/etc/hosts に 「192.168.0.2 mypc」といった情報を書き込みます。
+IPはifconfigコマンドから、ホスト名はhostnameコマンドから取得します。
+
+DHCP環境下で synergy.conf を固定するために書きました。
+
+GNU Debian lenny でのみ動作確認を取っています。
+Mac OS X で動かすためには、下記「$ sh ./setup.sh」を実行した後に、
+config.sh を書き換える必要があるかもしれません。
+(IPを取得する部分と、INTERFACE=eth0の部分)
+
+Windows で動かすためには、頑張らないといけません。
+
+/etc/hostsのバックアップを取っておいて下さい。
+
+[インストール]
+
+　　マシン1にインストールする手順。
+
+　　$ wget http://dandydot.homeip.net/~dot/software/dhns/dhns.tar.bz2
+　　$ tar jxf dhns.tar.bz2
+　　$ cd dhns
+　　$ sh ./setup.sh
+　　$ sudo cp -r ../dhns /etc/.
+
+　　マシン2にインストールする手順。
+
+　　マシン1にてdhns環境をマシン2にコピーする。
+　　(セッションIDを統一するため、/etc/dhns/config.shは各マシンで同じものを使う必要があります。そのため2台目以降のマシンでは以下のように環境をまるごとコピーして下さい。)
+　　
+
+　　$ scp -r /etc/dhns root@マシン2:/etc/.
+
+[実行]
+
+　　プロキシを使っている場合は下記コマンドを実行しておいて下さい。
+　　$ export http_proxy=http://proxy.hoge:8080
+
+　　マシン1にて実行。(ホスト情報をサーバに登録)
+　　マシン1 $ sh /etc/dhns/register_host.sh
+
+　　マシン2にて実行。(ホスト情報をサーバに登録)
+　　マシン2 $ sh /etc/dhns/register_host.sh
+
+　　マシン1にて実行。(名前解決情報を /etc/hosts に記録)
+　　マシン1 $ sudo sh /etc/dhns/hosts-edit.sh
+
+　　マシン2にて実行。(名前解決情報を /etc/hosts に記録)
+　　マシン2 $ sudo sh /etc/dhns/hosts-edit.sh
+
+　　register_host.shとhosts-edit.shは何回実行しても構いません。
+　　必要に応じて cron に登録するなどして下さい。
+　　ただし、私のサーバに掛かる負荷を配慮してくだちぃ。
+　　頻繁に実行したい場合は index.cgi がサーバスクリプトなので、
+　　自環境にインストールしてご利用くだちぃ。
+
+
+　　なんかおかしくなってサーバ上に登録されているホスト情報を削除したい
+　　場合は、以下を実行して下さい。
+
+　　$ sh /etc/dhns/clear_session.sh
+
+
+[DHNSサーバのインストール]
+
+　　通常は必要ありませんが、独自にDHNSサーバを構築する場合の手順です。
+
+　　$ cp index.cgi インストール先/.
+　　$ mkdir インストール先/cache
+　　$ chmod 777 インストール先/cache
+
+　　自サーバを参照するように各マシンの /etc/dhns/config.sh の下記部分を書き換えて下さい。
+
+　　DHNS_SERVER_URL='http://dandydot.homeip.net/cgi-bin/dhns/index.cgi'
+
